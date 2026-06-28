@@ -38,6 +38,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.runtime.DisposableEffect
 import com.example.xfilm.calculation.colorscience.HurterDriffield
 import com.example.xfilm.rendering.gl.LutGlSurfaceView
 import com.example.xfilm.rendering.lut.LUT3DGenerator
@@ -76,6 +80,26 @@ fun CameraScreen(
     ) { granted -> hasPermission = granted }
 
     var glSurfaceViewRef by remember { mutableStateOf<LutGlSurfaceView?>(null) }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, glSurfaceViewRef) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    glSurfaceViewRef?.onResume()
+                }
+                Lifecycle.Event.ON_PAUSE -> {
+                    glSurfaceViewRef?.onPause()
+                    actualViewModel.stopCamera()
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
         if (hasPermission) {

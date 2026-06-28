@@ -2,6 +2,7 @@ package com.example.xfilm.presentation.camera
 
 import android.Manifest
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.view.Surface
 import android.widget.Toast
@@ -16,6 +17,7 @@ import com.example.xfilm.rendering.gl.FrameCaptureListener
 import com.example.xfilm.rendering.media.ImageMetadata
 import com.example.xfilm.rendering.media.ImageSaver
 import com.example.xfilm.rendering.media.S24RawCapture
+import com.example.xfilm.rendering.media.DngSaver
 import com.example.xfilm.utils.CaptureAudioFeedback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,7 @@ class CameraViewModel(
 
     private var glSurfaceView: com.example.xfilm.rendering.gl.LutGlSurfaceView? = null
     private var lastMetadata: CameraUIState.Metering? = null
+    private var cameraJob: kotlinx.coroutines.Job? = null
 
     fun setGlSurfaceView(surfaceView: com.example.xfilm.rendering.gl.LutGlSurfaceView) {
         glSurfaceView = surfaceView
@@ -52,7 +55,8 @@ class CameraViewModel(
      */
     @RequiresPermission(Manifest.permission.CAMERA)
     fun startCamera(surface: Surface) {
-        viewModelScope.launch {
+        stopCamera()
+        cameraJob = viewModelScope.launch {
             try {
                 _uiState.value = CameraUIState.Loading
                 camera2Manager.previewMetadata(surface).collect { metadata ->
@@ -78,6 +82,7 @@ class CameraViewModel(
                 Log.e(TAG, "Camera permission denied", e)
                 _uiState.value = CameraUIState.Error("Camera permission required")
             } catch (e: Exception) {
+                if (e is kotlinx.coroutines.CancellationException) throw e
                 Log.e(TAG, "Camera error", e)
                 _uiState.value = CameraUIState.Error(e.message ?: "Unknown error")
             }
@@ -85,6 +90,8 @@ class CameraViewModel(
     }
 
     fun stopCamera() {
+        cameraJob?.cancel()
+        cameraJob = null
         camera2Manager.stopPreview()
     }
 
@@ -129,21 +136,43 @@ class CameraViewModel(
                     deviceModel = s24Specs?.modelName ?: "Unknown Device"
                 )
 
-                val filename = ImageSaver.generateFilename("jpg")
-                val uri = ImageSaver.saveBitmapToGalleryWithMetadata(
+                val jpegFilename = ImageSaver.generateFilename("jpg")
+                val dngFilename = ImageSaver.generateFilename("dng")
+
+                // Save JPEG (processed via LUT)
+                val jpegUri = ImageSaver.saveBitmapToGalleryWithMetadata(
                     context,
                     bitmap,
-                    filename,
+                    jpegFilename,
                     imageMetadata
                 )
 
-                if (uri != null) {
-                    val message = if (s24Specs?.supportsRaw == true) {
-                        "Foto guardada (formato: $captureFormat, ${s24Specs.mainSensorMp}MP)"
+                // Save DNG (RAW - simulated from GL data for now)
+                // TODO: In future, capture actual sensor RAW via Camera2 ImageReader
+                var dngUri: Uri? = null
+                if (s24Specs?.supportsRaw == true) {
+                    // Convert bitmap RGBA to Bayer pattern (12-bit simulation)
+                    val bayerRawData = convertRgbaToBayerRaw(rgbaPixels, width, height)
+                    dngUri = DngSaver.saveBayerRawToDng(
+                        context,
+                        bayerRawData,
+                        width,
+                        height,
+                        dngFilename,
+                        imageMetadata
+                    )
+                }
+
+                if (jpegUri != null) {
+                    val message = if (dngUri != null) {
+                        "Foto guardada: JPEG + RAW/DNG (${s24Specs?.mainSensorMp}MP)"
+                    } else if (s24Specs?.supportsRaw == true) {
+                        "Foto guardada: JPEG + RAW (${s24Specs?.mainSensorMp}MP)"
                     } else {
                         "Foto guardada (JPEG)"
                     }
                     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                    Log.i(TAG, "JPEG: $jpegUri\nDNG: $dngUri")
                 } else {
                     Toast.makeText(context, "Error al guardar foto", Toast.LENGTH_SHORT).show()
                 }
@@ -152,6 +181,42 @@ class CameraViewModel(
                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
+    }
+
+    /**
+     * Convert RGBA buffer to Bayer pattern RAW data (12-bit simulation).
+     * Uses RGGB (most common) pattern: R G R G... / G B G B...
+     */
+    private fun convertRgbaToBayerRaw(rgbaPixels: ByteArray, width: Int, height: Int): ByteArray {
+        // Each pixel in Bayer is 12-bit (1.5 bytes), but stored as 16-bit for alignment
+        val rawData = ByteArray(width * height * 2)
+
+        for (y in 0 until height) {
+            for (x in 0 until width) {
+                val pixelIndex = (y * width + x) * 4  // RGBA is 4 bytes per pixel
+                val r = (rgbaPixels[pixelIndex].toInt() and 0xFF)
+                val g = (rgbaPixels[pixelIndex + 1].toInt() and 0xFF)
+                val b = (rgbaPixels[pixelIndex + 2].toInt() and 0xFF)
+
+                // Simulate 12-bit Bayer pattern
+                val bayerValue = when {
+                    (y and 1) == 0 && (x and 1) == 0 -> r        // R
+                    (y and 1) == 0 && (x and 1) == 1 -> g        // G
+                    (y and 1) == 1 && (x and 1) == 0 -> g        // G
+                    else -> b                                      // B
+                }
+
+                // Convert 8-bit to 16-bit (shift left by 8)
+                val value16bit = (bayerValue shl 8) and 0xFFFF
+
+                // Store as 16-bit little-endian
+                val rawIndex = (y * width + x) * 2
+                rawData[rawIndex] = (value16bit and 0xFF).toByte()
+                rawData[rawIndex + 1] = ((value16bit shr 8) and 0xFF).toByte()
+            }
+        }
+
+        return rawData
     }
 
     override fun onCleared() {
