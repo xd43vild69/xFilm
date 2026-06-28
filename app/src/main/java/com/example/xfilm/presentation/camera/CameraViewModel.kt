@@ -42,11 +42,39 @@ class CameraViewModel(
     private var lastMetadata: CameraUIState.Metering? = null
     private var cameraJob: kotlinx.coroutines.Job? = null
 
+    private val _adjustments = MutableStateFlow(AnalogAdjustments())
+    val adjustments: StateFlow<AnalogAdjustments> = _adjustments.asStateFlow()
+
     fun setGlSurfaceView(surfaceView: com.example.xfilm.rendering.gl.LutGlSurfaceView) {
         glSurfaceView = surfaceView
         glSurfaceView?.setFrameCaptureListener(FrameCaptureListener { rgbaPixels, width, height ->
             handleFrameCapture(rgbaPixels, width, height)
         })
+        val adj = _adjustments.value
+        glSurfaceView?.setExposure(adj.exposure)
+        glSurfaceView?.setVignetteIntensity(adj.vignette)
+        glSurfaceView?.setGrainIntensity(adj.grainIntensity)
+        glSurfaceView?.setGrainSize(adj.grainSize)
+    }
+
+    fun updateExposure(ev: Float) {
+        _adjustments.value = _adjustments.value.copy(exposure = ev)
+        glSurfaceView?.setExposure(ev)
+    }
+
+    fun updateVignette(vignette: Float) {
+        _adjustments.value = _adjustments.value.copy(vignette = vignette)
+        glSurfaceView?.setVignetteIntensity(vignette)
+    }
+
+    fun updateGrainIntensity(intensity: Float) {
+        _adjustments.value = _adjustments.value.copy(grainIntensity = intensity)
+        glSurfaceView?.setGrainIntensity(intensity)
+    }
+
+    fun updateGrainSize(size: Float) {
+        _adjustments.value = _adjustments.value.copy(grainSize = size)
+        glSurfaceView?.setGrainSize(size)
     }
 
     /**
@@ -237,3 +265,10 @@ sealed class CameraUIState {
     ) : CameraUIState()
     data class Error(val message: String) : CameraUIState()
 }
+
+data class AnalogAdjustments(
+    val exposure: Float = 0.0f,       // -3.0 EV a +3.0 EV
+    val vignette: Float = 0.0f,       // 0.0 a 1.0 (intensidad)
+    val grainIntensity: Float = 0.4f, // 0.0 a 1.0 (grano)
+    val grainSize: Float = 1.0f       // 0.5 a 2.0 (tamaño)
+)

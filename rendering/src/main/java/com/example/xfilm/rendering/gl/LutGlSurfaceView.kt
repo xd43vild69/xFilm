@@ -50,4 +50,20 @@ class LutGlSurfaceView(
     ) {
         renderer.setPinholeEffects(vignetteEnabled, chromaticEnabled, softnessEnabled)
     }
+
+    fun setExposure(ev: Float) {
+        renderer.setExposure(ev)
+    }
+
+    fun setVignetteIntensity(intensity: Float) {
+        renderer.setVignetteIntensity(intensity)
+    }
+
+    fun setGrainIntensity(intensity: Float) {
+        renderer.setGrainIntensity(intensity)
+    }
+
+    fun setGrainSize(size: Float) {
+        renderer.setGrainSize(size)
+    }
 }

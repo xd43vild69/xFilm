@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -80,6 +82,7 @@ fun CameraScreen(
     ) { granted -> hasPermission = granted }
 
     var glSurfaceViewRef by remember { mutableStateOf<LutGlSurfaceView?>(null) }
+    var showAdjustmentsPanel by remember { mutableStateOf(false) }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, glSurfaceViewRef) {
@@ -124,6 +127,126 @@ fun CameraScreen(
             ShutterButton(
                 onClick = { actualViewModel.captureFrame() }
             )
+
+            // Toggle Adjustments Button (Bottom Start)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(bottom = 16.dp, start = 16.dp),
+                contentAlignment = Alignment.BottomStart
+            ) {
+                Button(onClick = { showAdjustmentsPanel = !showAdjustmentsPanel }) {
+                    Text(text = "🎛️ Ajustes")
+                }
+            }
+
+            if (showAdjustmentsPanel) {
+                val adjustments by actualViewModel.adjustments.collectAsState()
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                color = Color(0xDD111111),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                            )
+                            .padding(24.dp)
+                            .clickable(enabled = true, onClick = {}), // prevent click-through
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Ajustes de Emulsión",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "✕",
+                                modifier = Modifier.clickable { showAdjustmentsPanel = false },
+                                color = Color.LightGray,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+
+                        // 1. Exposure Compensation
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Compensación de Exposición", color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)
+                                Text("${if (adjustments.exposure >= 0) "+" else ""}${"%.2f".format(adjustments.exposure)} EV", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            androidx.compose.material3.Slider(
+                                value = adjustments.exposure,
+                                onValueChange = { actualViewModel.updateExposure(it) },
+                                valueRange = -2.0f..2.0f,
+                                steps = 11, // steps of 1/3 EV
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+
+                        // 2. Vignette
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Viñeta", color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)
+                                Text("${(adjustments.vignette * 100).toInt()}%", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            androidx.compose.material3.Slider(
+                                value = adjustments.vignette,
+                                onValueChange = { actualViewModel.updateVignette(it) },
+                                valueRange = 0.0f..1.0f,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+
+                        // 3. Grain Intensity
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Intensidad de Grano", color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)
+                                Text("${(adjustments.grainIntensity * 100).toInt()}%", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            androidx.compose.material3.Slider(
+                                value = adjustments.grainIntensity,
+                                onValueChange = { actualViewModel.updateGrainIntensity(it) },
+                                valueRange = 0.0f..1.0f,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+
+                        // 4. Grain Size
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Tamaño de Grano", color = Color.LightGray, style = MaterialTheme.typography.bodyMedium)
+                                Text("${"%.1f".format(adjustments.grainSize)}x", color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                            }
+                            androidx.compose.material3.Slider(
+                                value = adjustments.grainSize,
+                                onValueChange = { actualViewModel.updateGrainSize(it) },
+                                valueRange = 0.5f..2.0f,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
         } else {
             PermissionPrompt(
                 onRequest = { permissionLauncher.launch(Manifest.permission.CAMERA) },

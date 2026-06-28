@@ -13,6 +13,7 @@ import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 import kotlin.math.sin
+import kotlin.math.pow
 
 fun interface FrameCaptureListener {
     fun onFrameCaptured(rgbaPixels: ByteArray, width: Int, height: Int)
@@ -74,6 +75,7 @@ class LutPreviewRenderer(
     private var uGrainSizeLoc = 0
     private var uGrainLuminanceLoc = 0
     private var uGrainTimeSeedLoc = 0
+    private var uExposureLoc = 0
 
     // Pinhole camera effect locations
     private var uVignetteEnabledLoc = 0
@@ -116,6 +118,7 @@ class LutPreviewRenderer(
         uGrainSizeLoc = GLES30.glGetUniformLocation(program, "uGrainSize")
         uGrainLuminanceLoc = GLES30.glGetUniformLocation(program, "uGrainLuminance")
         uGrainTimeSeedLoc = GLES30.glGetUniformLocation(program, "uGrainTimeSeed")
+        uExposureLoc = GLES30.glGetUniformLocation(program, "uExposure")
 
         // Pinhole effects
         uVignetteEnabledLoc = GLES30.glGetUniformLocation(program, "uVignetteEnabled")
@@ -167,6 +170,10 @@ class LutPreviewRenderer(
     private var softnessThresholdValue = SOFTNESS_THRESHOLD
     private var softnessAmountValue = SOFTNESS_AMOUNT
 
+    private var exposureValue = 0.0f
+    private var grainIntensityValue = 0.4f
+    private var grainSizeValue = 1.0f
+
     fun setPinholeEffects(
         vignetteEnabled: Boolean,
         chromaticEnabled: Boolean,
@@ -175,6 +182,27 @@ class LutPreviewRenderer(
         vignetteEnabledValue = if (vignetteEnabled) 1.0f else 0.0f
         chromaticEnabledValue = if (chromaticEnabled) 1.0f else 0.0f
         softnessEnabledValue = if (softnessEnabled) 1.0f else 0.0f
+        requestRender()
+    }
+
+    fun setExposure(ev: Float) {
+        exposureValue = ev
+        requestRender()
+    }
+
+    fun setVignetteIntensity(intensity: Float) {
+        vignetteIntensityValue = intensity
+        vignetteEnabledValue = if (intensity > 0f) 1.0f else 0.0f
+        requestRender()
+    }
+
+    fun setGrainIntensity(intensity: Float) {
+        grainIntensityValue = intensity
+        requestRender()
+    }
+
+    fun setGrainSize(size: Float) {
+        grainSizeValue = size
         requestRender()
     }
 
@@ -196,15 +224,16 @@ class LutPreviewRenderer(
         GLES30.glBindTexture(GLES30.GL_TEXTURE_3D, lutTexId)
         GLES30.glUniform1i(uLutLoc, 1)
         GLES30.glUniform1f(uLutSizeLoc, lut.dimension.toFloat())
+        GLES30.glUniform1f(uExposureLoc, 2.0f.pow(exposureValue))
 
         // Grain 2D texture -> unit 2
         GLES30.glActiveTexture(GLES30.GL_TEXTURE2)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, grainTexId)
         GLES30.glUniform1i(uGrainTexLoc, 2)
 
-        // Grain parameters (Kodak Tri-X 400)
-        GLES30.glUniform1f(uGrainIntensityLoc, 0.75f)
-        GLES30.glUniform1f(uGrainSizeLoc, 1.0f)
+        // Grain parameters (dynamic)
+        GLES30.glUniform1f(uGrainIntensityLoc, grainIntensityValue)
+        GLES30.glUniform1f(uGrainSizeLoc, grainSizeValue)
         GLES30.glUniform1f(uGrainLuminanceLoc, 0.85f)
 
         // Grain time seed (subtle evolution, ~10 second cycle)

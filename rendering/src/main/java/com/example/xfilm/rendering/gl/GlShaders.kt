@@ -30,6 +30,7 @@ uniform samplerExternalOES uCameraTex;
 uniform sampler3D uLut;
 uniform sampler2D uGrainTex;
 uniform float uLutSize;
+uniform float uExposure;
 uniform float uGrainIntensity;
 uniform float uGrainSize;
 uniform float uGrainLuminance;
@@ -90,7 +91,7 @@ vec3 applySoftEdges(vec3 color, vec2 uv) {
 }
 
 void main() {
-    vec3 c = texture(uCameraTex, vTexCoord).rgb;
+    vec3 c = texture(uCameraTex, vTexCoord).rgb * uExposure;
     // Map color into LUT texel-center coordinates to avoid edge clamp artifacts.
     vec3 coord = (c * (uLutSize - 1.0) + 0.5) / uLutSize;
     vec3 graded = texture(uLut, coord).rgb;
