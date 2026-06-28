@@ -35,8 +35,59 @@ uniform float uGrainSize;
 uniform float uGrainLuminance;
 uniform float uGrainTimeSeed;
 
+// === PINHOLE CAMERA EFFECTS ===
+uniform float uVignetteEnabled;
+uniform float uVignetteIntensity;
+uniform float uVignetteFalloff;
+
+uniform float uChromaticEnabled;
+uniform float uChromaticIntensity;
+uniform float uChromaticDistance;
+
+uniform float uSoftnessEnabled;
+uniform float uSoftnessThreshold;
+uniform float uSoftnessAmount;
+
 in vec2 vTexCoord;
 out vec4 fragColor;
+
+// Vignette: radial darkening from center
+vec3 applyVignette(vec3 color, vec2 uv) {
+    vec2 centered = uv - 0.5;
+    float dist = length(centered) * 1.414; // normalize diagonal
+    float vignette = smoothstep(0.0, uVignetteFalloff, 1.0 - dist);
+    vignette = mix(1.0, vignette, uVignetteIntensity);
+    return color * vignette;
+}
+
+// Chromatic aberration: radial RGB shift
+vec3 applyChromaticAberration(vec3 color, vec2 uv) {
+    vec2 centered = (uv - 0.5) * uChromaticDistance;
+    float dist = length(centered);
+
+    // Sample each channel with slight radial offset
+    float r = texture(uCameraTex, uv + centered * (uChromaticIntensity + 0.001)).r;
+    float g = texture(uCameraTex, uv + centered * (uChromaticIntensity + 0.002)).g;
+    float b = texture(uCameraTex, uv + centered * (uChromaticIntensity + 0.003)).b;
+
+    vec3 ca = vec3(r, g, b);
+    return mix(color, ca, uChromaticEnabled);
+}
+
+// Edge softness: blur and desaturate at corners
+vec3 applySoftEdges(vec3 color, vec2 uv) {
+    vec2 centered = abs(uv - 0.5);
+    float edgeFactor = max(centered.x, centered.y) * 2.0;
+
+    float softening = smoothstep(uSoftnessThreshold, 1.0, edgeFactor);
+
+    // Desaturate + dim at edges
+    float lum = dot(color, vec3(0.299, 0.587, 0.114));
+    color = mix(color, vec3(lum), softening * uSoftnessAmount * 0.5);
+    color *= 1.0 - (softening * uSoftnessAmount * 0.2);
+
+    return color;
+}
 
 void main() {
     vec3 c = texture(uCameraTex, vTexCoord).rgb;
@@ -44,6 +95,14 @@ void main() {
     vec3 coord = (c * (uLutSize - 1.0) + 0.5) / uLutSize;
     vec3 graded = texture(uLut, coord).rgb;
 
+    // ========== PINHOLE EFFECTS PIPELINE ==========
+    // 1. VIGNETTE (darkens edges, modulates grain)
+    graded = applyVignette(graded, vTexCoord);
+
+    // 2. CHROMATIC ABERRATION (radial shift, before grain)
+    graded = applyChromaticAberration(graded, vTexCoord);
+
+    // 3. GRAIN (with vignette modulation)
     // Sample grain texture with time-based seed (subtle evolution)
     vec2 grainCoord = vTexCoord * uGrainSize + uGrainTimeSeed;
     vec4 grainSample = texture(uGrainTex, grainCoord);
@@ -63,8 +122,16 @@ void main() {
                        (1.0 + shadowBoost * uGrainLuminance +
                         highlightSuppression * uGrainLuminance);
 
+    // Grain reduction at vignette edges
+    grainAmount *= (1.0 - max(abs(vTexCoord.x - 0.5), abs(vTexCoord.y - 0.5)) *
+                             uVignetteEnabled * uVignetteIntensity * 0.3);
+
     // Apply grain
     vec3 final = graded + grainNoise * grainAmount * 0.1;
+
+    // 4. EDGE SOFTNESS (final overlay, post-grain)
+    final = applySoftEdges(final, vTexCoord);
+
     fragColor = vec4(final, 1.0);
 }
 """

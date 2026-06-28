@@ -42,4 +42,12 @@ class LutGlSurfaceView(
     fun requestFrameCapture() {
         renderer.requestFrameCapture()
     }
+
+    fun setPinholeEffects(
+        vignetteEnabled: Boolean,
+        chromaticEnabled: Boolean,
+        softnessEnabled: Boolean
+    ) {
+        renderer.setPinholeEffects(vignetteEnabled, chromaticEnabled, softnessEnabled)
+    }
 }

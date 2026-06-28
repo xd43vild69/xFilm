@@ -42,6 +42,19 @@ class LutPreviewRenderer(
             -1f, 1f, 0f, 1f,
             1f, 1f, 1f, 1f,
         )
+
+        // Pinhole effect default values (all OFF)
+        private const val VIGNETTE_ENABLED = 0.0f
+        private const val VIGNETTE_INTENSITY = 0.5f
+        private const val VIGNETTE_FALLOFF = 2.0f
+
+        private const val CHROMATIC_ENABLED = 0.0f
+        private const val CHROMATIC_INTENSITY = 0.05f
+        private const val CHROMATIC_DISTANCE = 1.0f
+
+        private const val SOFTNESS_ENABLED = 0.0f
+        private const val SOFTNESS_THRESHOLD = 0.85f
+        private const val SOFTNESS_AMOUNT = 0.4f
     }
 
     private var program = 0
@@ -61,6 +74,19 @@ class LutPreviewRenderer(
     private var uGrainSizeLoc = 0
     private var uGrainLuminanceLoc = 0
     private var uGrainTimeSeedLoc = 0
+
+    // Pinhole camera effect locations
+    private var uVignetteEnabledLoc = 0
+    private var uVignetteIntensityLoc = 0
+    private var uVignetteFalloffLoc = 0
+
+    private var uChromaticEnabledLoc = 0
+    private var uChromaticIntensityLoc = 0
+    private var uChromaticDistanceLoc = 0
+
+    private var uSoftnessEnabledLoc = 0
+    private var uSoftnessThresholdLoc = 0
+    private var uSoftnessAmountLoc = 0
 
     private val texMatrix = FloatArray(16)
     private lateinit var quadBuffer: FloatBuffer
@@ -91,6 +117,19 @@ class LutPreviewRenderer(
         uGrainLuminanceLoc = GLES30.glGetUniformLocation(program, "uGrainLuminance")
         uGrainTimeSeedLoc = GLES30.glGetUniformLocation(program, "uGrainTimeSeed")
 
+        // Pinhole effects
+        uVignetteEnabledLoc = GLES30.glGetUniformLocation(program, "uVignetteEnabled")
+        uVignetteIntensityLoc = GLES30.glGetUniformLocation(program, "uVignetteIntensity")
+        uVignetteFalloffLoc = GLES30.glGetUniformLocation(program, "uVignetteFalloff")
+
+        uChromaticEnabledLoc = GLES30.glGetUniformLocation(program, "uChromaticEnabled")
+        uChromaticIntensityLoc = GLES30.glGetUniformLocation(program, "uChromaticIntensity")
+        uChromaticDistanceLoc = GLES30.glGetUniformLocation(program, "uChromaticDistance")
+
+        uSoftnessEnabledLoc = GLES30.glGetUniformLocation(program, "uSoftnessEnabled")
+        uSoftnessThresholdLoc = GLES30.glGetUniformLocation(program, "uSoftnessThreshold")
+        uSoftnessAmountLoc = GLES30.glGetUniformLocation(program, "uSoftnessAmount")
+
         cameraTexId = createExternalTexture()
         lutTexId = uploadLut3D(lut)
         grainTexId = uploadGrainTexture()
@@ -114,6 +153,28 @@ class LutPreviewRenderer(
 
     fun requestFrameCapture() {
         shouldCaptureFrame = true
+        requestRender()
+    }
+
+    // Pinhole camera effects control
+    private var vignetteEnabledValue = VIGNETTE_ENABLED
+    private var vignetteIntensityValue = VIGNETTE_INTENSITY
+    private var vignetteFalloffValue = VIGNETTE_FALLOFF
+    private var chromaticEnabledValue = CHROMATIC_ENABLED
+    private var chromaticIntensityValue = CHROMATIC_INTENSITY
+    private var chromaticDistanceValue = CHROMATIC_DISTANCE
+    private var softnessEnabledValue = SOFTNESS_ENABLED
+    private var softnessThresholdValue = SOFTNESS_THRESHOLD
+    private var softnessAmountValue = SOFTNESS_AMOUNT
+
+    fun setPinholeEffects(
+        vignetteEnabled: Boolean,
+        chromaticEnabled: Boolean,
+        softnessEnabled: Boolean
+    ) {
+        vignetteEnabledValue = if (vignetteEnabled) 1.0f else 0.0f
+        chromaticEnabledValue = if (chromaticEnabled) 1.0f else 0.0f
+        softnessEnabledValue = if (softnessEnabled) 1.0f else 0.0f
         requestRender()
     }
 
@@ -150,6 +211,19 @@ class LutPreviewRenderer(
         frameCount++
         val grainTimeSeed = (sin(frameCount * 0.001) * 0.01f).toFloat()
         GLES30.glUniform1f(uGrainTimeSeedLoc, grainTimeSeed)
+
+        // Pinhole camera effects
+        GLES30.glUniform1f(uVignetteEnabledLoc, vignetteEnabledValue)
+        GLES30.glUniform1f(uVignetteIntensityLoc, vignetteIntensityValue)
+        GLES30.glUniform1f(uVignetteFalloffLoc, vignetteFalloffValue)
+
+        GLES30.glUniform1f(uChromaticEnabledLoc, chromaticEnabledValue)
+        GLES30.glUniform1f(uChromaticIntensityLoc, chromaticIntensityValue)
+        GLES30.glUniform1f(uChromaticDistanceLoc, chromaticDistanceValue)
+
+        GLES30.glUniform1f(uSoftnessEnabledLoc, softnessEnabledValue)
+        GLES30.glUniform1f(uSoftnessThresholdLoc, softnessThresholdValue)
+        GLES30.glUniform1f(uSoftnessAmountLoc, softnessAmountValue)
 
         GLES30.glUniformMatrix4fv(uTexMatrixLoc, 1, false, texMatrix, 0)
 
