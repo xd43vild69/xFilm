@@ -137,7 +137,7 @@ data class HurterDriffield(
             toeThreshold = 0.18f,
             name = "Kodak Tri-X 400",
             isBlackAndWhite = true,
-            grainIntensity = 0.55f,
+            grainIntensity = 0.75f,
             grainSize = 1.0f,
         )
 

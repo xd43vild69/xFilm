@@ -142,7 +142,7 @@ class LutPreviewRenderer(
         GLES30.glUniform1i(uGrainTexLoc, 2)
 
         // Grain parameters (Kodak Tri-X 400)
-        GLES30.glUniform1f(uGrainIntensityLoc, 0.55f)
+        GLES30.glUniform1f(uGrainIntensityLoc, 0.75f)
         GLES30.glUniform1f(uGrainSizeLoc, 1.0f)
         GLES30.glUniform1f(uGrainLuminanceLoc, 0.85f)
 
