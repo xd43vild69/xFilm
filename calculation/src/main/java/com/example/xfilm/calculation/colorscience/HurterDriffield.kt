@@ -61,6 +61,16 @@ data class HurterDriffield(
      * Whether this is a black and white film (desaturate output).
      */
     val isBlackAndWhite: Boolean = false,
+
+    /**
+     * Grain intensity for film simulation (0.0-1.0).
+     */
+    val grainIntensity: Float = 0.0f,
+
+    /**
+     * Grain size multiplier.
+     */
+    val grainSize: Float = 1.0f,
 ) {
 
     /**
@@ -127,6 +137,8 @@ data class HurterDriffield(
             toeThreshold = 0.18f,
             name = "Kodak Tri-X 400",
             isBlackAndWhite = true,
+            grainIntensity = 0.55f,
+            grainSize = 1.0f,
         )
 
         /**
