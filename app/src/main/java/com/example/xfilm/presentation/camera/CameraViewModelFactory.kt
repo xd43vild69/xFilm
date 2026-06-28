@@ -17,6 +17,6 @@ class CameraViewModelFactory(
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         val capabilities = CameraModule.provideCameraCapabilities(context)
         val camera2Manager = CameraModule.provideCamera2Manager(context, capabilities)
-        return CameraViewModel(camera2Manager) as T
+        return CameraViewModel(context, camera2Manager) as T
     }
 }

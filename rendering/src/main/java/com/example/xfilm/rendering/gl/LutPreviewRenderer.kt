@@ -12,6 +12,10 @@ import java.nio.FloatBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+fun interface FrameCaptureListener {
+    fun onFrameCaptured(rgbaPixels: ByteArray, width: Int, height: Int)
+}
+
 /**
  * Renders the camera preview through a 3D LUT using OpenGL ES 3.0.
  *
@@ -53,6 +57,11 @@ class LutPreviewRenderer(
     private val texMatrix = FloatArray(16)
     private lateinit var quadBuffer: FloatBuffer
 
+    private var frameCaptureListener: FrameCaptureListener? = null
+    private var shouldCaptureFrame = false
+    private var frameWidth = 0
+    private var frameHeight = 0
+
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         quadBuffer = ByteBuffer.allocateDirect(QUAD.size * Float.SIZE_BYTES)
             .order(ByteOrder.nativeOrder())
@@ -79,6 +88,17 @@ class LutPreviewRenderer(
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES30.glViewport(0, 0, width, height)
+        frameWidth = width
+        frameHeight = height
+    }
+
+    fun setFrameCaptureListener(listener: FrameCaptureListener?) {
+        frameCaptureListener = listener
+    }
+
+    fun requestFrameCapture() {
+        shouldCaptureFrame = true
+        requestRender()
     }
 
     override fun onDrawFrame(gl: GL10?) {
@@ -113,6 +133,12 @@ class LutPreviewRenderer(
 
         GLES30.glDrawArrays(GLES30.GL_TRIANGLE_STRIP, 0, 4)
 
+        // Capture frame if requested
+        if (shouldCaptureFrame && frameWidth > 0 && frameHeight > 0) {
+            captureFrameBuffer()
+            shouldCaptureFrame = false
+        }
+
         GLES30.glDisableVertexAttribArray(aPositionLoc)
         GLES30.glDisableVertexAttribArray(aTexCoordLoc)
         GlUtil.checkGlError("onDrawFrame")
@@ -136,6 +162,43 @@ class LutPreviewRenderer(
             GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES30.GL_TEXTURE_WRAP_T, GLES30.GL_CLAMP_TO_EDGE,
         )
         return texId
+    }
+
+    private fun captureFrameBuffer() {
+        val pixelBuffer = ByteBuffer.allocateDirect(frameWidth * frameHeight * 4)
+        pixelBuffer.order(ByteOrder.nativeOrder())
+
+        GLES30.glReadPixels(
+            0, 0, frameWidth, frameHeight,
+            GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE,
+            pixelBuffer
+        )
+
+        val pixelArray = ByteArray(frameWidth * frameHeight * 4)
+        pixelBuffer.rewind()
+        pixelBuffer.get(pixelArray)
+
+        // Flip vertically (OpenGL coordinates are bottom-up, image is top-down)
+        val flippedPixels = flipImageVertically(pixelArray, frameWidth, frameHeight)
+
+        frameCaptureListener?.onFrameCaptured(flippedPixels, frameWidth, frameHeight)
+    }
+
+    private fun flipImageVertically(pixelArray: ByteArray, width: Int, height: Int): ByteArray {
+        val flipped = ByteArray(pixelArray.size)
+        val bytesPerRow = width * 4
+
+        for (y in 0 until height) {
+            System.arraycopy(
+                pixelArray,
+                (height - 1 - y) * bytesPerRow,
+                flipped,
+                y * bytesPerRow,
+                bytesPerRow
+            )
+        }
+
+        return flipped
     }
 
     private fun uploadLut3D(lut: LUT3DGenerator.Lut3D): Int {

@@ -1,0 +1,119 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: installDebug
+> Task :app:preBuild UP-TO-DATE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :camera:preBuild UP-TO-DATE
+> Task :calculation:preBuild UP-TO-DATE
+> Task :camera:generateDebugAssets UP-TO-DATE
+> Task :rendering:preBuild UP-TO-DATE
+> Task :calculation:generateDebugAssets UP-TO-DATE
+> Task :rendering:generateDebugAssets UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :calculation:preDebugBuild UP-TO-DATE
+> Task :camera:preDebugBuild UP-TO-DATE
+> Task :rendering:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :camera:javaPreCompileDebug UP-TO-DATE
+> Task :rendering:generateDebugResources UP-TO-DATE
+> Task :calculation:generateDebugResources UP-TO-DATE
+> Task :calculation:processDebugNavigationResources UP-TO-DATE
+> Task :calculation:javaPreCompileDebug UP-TO-DATE
+> Task :rendering:processDebugNavigationResources UP-TO-DATE
+> Task :camera:generateDebugResources UP-TO-DATE
+> Task :calculation:mergeDebugAssets UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :rendering:javaPreCompileDebug UP-TO-DATE
+> Task :camera:processDebugNavigationResources UP-TO-DATE
+> Task :camera:mergeDebugAssets UP-TO-DATE
+> Task :app:generateDebugGlobalSynthetics UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :rendering:mergeDebugAssets UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :camera:writeDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :calculation:writeDebugAarMetadata UP-TO-DATE
+> Task :rendering:writeDebugAarMetadata UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :camera:extractDeepLinksDebug UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :calculation:packageDebugResources UP-TO-DATE
+> Task :camera:packageDebugResources UP-TO-DATE
+> Task :rendering:packageDebugResources UP-TO-DATE
+> Task :calculation:extractDeepLinksDebug UP-TO-DATE
+> Task :rendering:extractDeepLinksDebug UP-TO-DATE
+> Task :camera:processDebugManifest UP-TO-DATE
+> Task :calculation:processDebugManifest UP-TO-DATE
+> Task :calculation:mapDebugSourceSetPaths UP-TO-DATE
+> Task :rendering:processDebugManifest UP-TO-DATE
+> Task :camera:parseDebugLocalResources UP-TO-DATE
+> Task :calculation:parseDebugLocalResources UP-TO-DATE
+> Task :rendering:parseDebugLocalResources UP-TO-DATE
+> Task :calculation:compileDebugLibraryResources UP-TO-DATE
+> Task :camera:mapDebugSourceSetPaths UP-TO-DATE
+> Task :rendering:mapDebugSourceSetPaths UP-TO-DATE
+> Task :rendering:generateDebugRFile UP-TO-DATE
+> Task :camera:generateDebugRFile UP-TO-DATE
+> Task :camera:compileDebugLibraryResources UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :rendering:compileDebugLibraryResources UP-TO-DATE
+> Task :calculation:generateDebugRFile UP-TO-DATE
+> Task :camera:mergeDebugJniLibFolders UP-TO-DATE
+> Task :calculation:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :rendering:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :camera:mergeDebugNativeLibs NO-SOURCE
+> Task :calculation:mergeDebugNativeLibs NO-SOURCE
+> Task :rendering:mergeDebugNativeLibs NO-SOURCE
+> Task :camera:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :rendering:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :calculation:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :camera:compileDebugKotlin UP-TO-DATE
+> Task :camera:compileDebugJavaWithJavac NO-SOURCE
+> Task :camera:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :camera:processDebugJavaRes UP-TO-DATE
+> Task :camera:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:processDebugResources UP-TO-DATE
+> Task :calculation:compileDebugKotlin
+> Task :calculation:compileDebugJavaWithJavac NO-SOURCE
+> Task :calculation:processDebugJavaRes UP-TO-DATE
+> Task :calculation:bundleLibRuntimeToDirDebug
+> Task :calculation:bundleLibCompileToJarDebug
+> Task :rendering:compileDebugKotlin
+> Task :rendering:compileDebugJavaWithJavac NO-SOURCE
+> Task :rendering:processDebugJavaRes UP-TO-DATE
+> Task :rendering:bundleLibRuntimeToDirDebug
+> Task :rendering:bundleLibCompileToJarDebug
+> Task :app:mergeLibDexDebug
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:dexBuilderDebug UP-TO-DATE
+> Task :app:mergeProjectDexDebug UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+
+> Task :app:installDebug
+Installing APK 'app-debug.apk' on 'xfilm_test(AVD) - 15' for :app:debug
+Installed on 1 device.
+
+BUILD SUCCESSFUL in 28s
+91 actionable tasks: 10 executed, 81 up-to-date
+Configuration cache entry stored.

@@ -56,6 +56,11 @@ data class HurterDriffield(
      * Name of the film this curve approximates.
      */
     val name: String = "Generic BW",
+
+    /**
+     * Whether this is a black and white film (desaturate output).
+     */
+    val isBlackAndWhite: Boolean = false,
 ) {
 
     /**
@@ -121,6 +126,7 @@ data class HurterDriffield(
             toeSlope = 0.45f,
             toeThreshold = 0.18f,
             name = "Kodak Tri-X 400",
+            isBlackAndWhite = true,
         )
 
         /**

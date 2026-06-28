@@ -43,10 +43,11 @@ private const val PREVIEW_HEIGHT = 720
 @Composable
 fun CameraScreen(
     modifier: Modifier = Modifier,
+    viewModel: CameraViewModel? = null,
 ) {
     val context = LocalContext.current
-    val viewModel: CameraViewModel = viewModel(factory = CameraViewModelFactory(context))
-    val uiState by viewModel.uiState.collectAsState()
+    val actualViewModel: CameraViewModel = viewModel ?: androidx.lifecycle.viewmodel.compose.viewModel(factory = CameraViewModelFactory(context))
+    val uiState by actualViewModel.uiState.collectAsState()
 
     // Bake the film LUT once (Tri-X 400 by default).
     val lut = remember {
@@ -72,7 +73,9 @@ fun CameraScreen(
                     LutGlSurfaceView(ctx, lut) { surfaceTexture ->
                         surfaceTexture.setDefaultBufferSize(PREVIEW_WIDTH, PREVIEW_HEIGHT)
                         val surface = Surface(surfaceTexture)
-                        startWithPermission(ctx, viewModel, surface)
+                        startWithPermission(ctx, actualViewModel, surface)
+                    }.also { glSurfaceView ->
+                        actualViewModel.setGlSurfaceView(glSurfaceView)
                     }
                 },
             )

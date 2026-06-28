@@ -47,13 +47,28 @@ class LUT3DGenerator {
 
         var i = 0
         for (b in 0 until dimension) {
-            val mappedB = curve.toneMap(b * step)
+            val inputB = b * step
             for (g in 0 until dimension) {
-                val mappedG = curve.toneMap(g * step)
+                val inputG = g * step
                 for (r in 0 until dimension) {
-                    rgb[i++] = curve.toneMap(r * step)
-                    rgb[i++] = mappedG
-                    rgb[i++] = mappedB
+                    val inputR = r * step
+
+                    val mappedR = curve.toneMap(inputR)
+                    val mappedG = curve.toneMap(inputG)
+                    val mappedB = curve.toneMap(inputB)
+
+                    if (curve.isBlackAndWhite) {
+                        // Desaturate using ITU-R BT.601 luminance formula
+                        val lum = 0.299f * inputR + 0.587f * inputG + 0.114f * inputB
+                        val mappedLum = curve.toneMap(lum)
+                        rgb[i++] = mappedLum
+                        rgb[i++] = mappedLum
+                        rgb[i++] = mappedLum
+                    } else {
+                        rgb[i++] = mappedR
+                        rgb[i++] = mappedG
+                        rgb[i++] = mappedB
+                    }
                 }
             }
         }

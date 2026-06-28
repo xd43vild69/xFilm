@@ -127,6 +127,8 @@ class HurterDriefieldTest {
         assertEquals("Kodak Tri-X 400", triX.name)
         // Should have high contrast (high gamma)
         assertTrue(triX.gamma > 2f)
+        // Should be marked as black and white
+        assertTrue("Tri-X 400 should be marked as black and white", triX.isBlackAndWhite)
     }
 
     /**

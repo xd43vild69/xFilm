@@ -22,14 +22,24 @@ class LutGlSurfaceView(
     onSurfaceTextureReady: (SurfaceTexture) -> Unit,
 ) : GLSurfaceView(context) {
 
+    private lateinit var renderer: LutPreviewRenderer
+
     init {
         setEGLContextClientVersion(3)
-        val renderer = LutPreviewRenderer(
+        renderer = LutPreviewRenderer(
             lut = lut,
             requestRender = { requestRender() },
             onSurfaceTextureReady = onSurfaceTextureReady,
         )
         setRenderer(renderer)
         renderMode = RENDERMODE_WHEN_DIRTY
+    }
+
+    fun setFrameCaptureListener(listener: FrameCaptureListener?) {
+        renderer.setFrameCaptureListener(listener)
+    }
+
+    fun requestFrameCapture() {
+        renderer.requestFrameCapture()
     }
 }
