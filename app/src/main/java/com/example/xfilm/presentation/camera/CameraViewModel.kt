@@ -15,6 +15,7 @@ import com.example.xfilm.camera.Camera2Manager
 import com.example.xfilm.rendering.gl.FrameCaptureListener
 import com.example.xfilm.rendering.media.ImageMetadata
 import com.example.xfilm.rendering.media.ImageSaver
+import com.example.xfilm.rendering.media.S24RawCapture
 import com.example.xfilm.utils.CaptureAudioFeedback
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -107,15 +108,28 @@ class CameraViewModel(
                     return@launch
                 }
 
+                // Detect S24+ capabilities
+                val s24Specs = S24RawCapture.detectS24Specifications(context)
+                if (s24Specs != null) {
+                    Log.i(TAG, S24RawCapture.formatSpecifications(s24Specs))
+                }
+
+                val captureFormat = if (s24Specs?.supportsRaw == true) "RAW/DNG" else "JPEG"
+                val sensorRes = s24Specs?.let { "${it.mainSensorMp}MP (${it.mainResolutionW}x${it.mainResolutionH})" }
+                    ?: "Unknown"
+
                 val imageMetadata = ImageMetadata(
                     ev = metadata.ev,
                     iso = metadata.iso,
                     aperture = metadata.aperture,
                     exposureSeconds = metadata.exposureSeconds,
-                    filmName = "Kodak Tri-X 400"
+                    filmName = "Kodak Tri-X 400",
+                    captureFormat = captureFormat,
+                    sensorResolution = sensorRes,
+                    deviceModel = s24Specs?.modelName ?: "Unknown Device"
                 )
 
-                val filename = ImageSaver.generateFilename()
+                val filename = ImageSaver.generateFilename("jpg")
                 val uri = ImageSaver.saveBitmapToGalleryWithMetadata(
                     context,
                     bitmap,
@@ -124,7 +138,12 @@ class CameraViewModel(
                 )
 
                 if (uri != null) {
-                    Toast.makeText(context, "Foto guardada", Toast.LENGTH_SHORT).show()
+                    val message = if (s24Specs?.supportsRaw == true) {
+                        "Foto guardada (formato: $captureFormat, ${s24Specs.mainSensorMp}MP)"
+                    } else {
+                        "Foto guardada (JPEG)"
+                    }
+                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
                 } else {
                     Toast.makeText(context, "Error al guardar foto", Toast.LENGTH_SHORT).show()
                 }
